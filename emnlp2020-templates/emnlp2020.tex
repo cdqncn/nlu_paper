@@ -1,0 +1,354 @@
+%
+% File emnlp2020.tex
+%
+%% Based on the style files for ACL 2020, which were
+%% Based on the style files for ACL 2018, NAACL 2018/19, which were
+%% Based on the style files for ACL-2015, with some improvements
+%%  taken from the NAACL-2016 style
+%% Based on the style files for ACL-2014, which were, in turn,
+%% based on ACL-2013, ACL-2012, ACL-2011, ACL-2010, ACL-IJCNLP-2009,
+%% EACL-2009, IJCNLP-2008...
+%% Based on the style files for EACL 2006 by
+%%e.agirre@ehu.es or Sergi.Balari@uab.es
+%% and that of ACL 08 by Joakim Nivre and Noah Smith
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{emnlp2020}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{graphicx}
+\renewcommand{\UrlFont}{\ttfamily\small}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+%\aclfinalcopy % Uncomment this line for the final submission
+%\def\aclpaperid{***} %  Enter the acl Paper ID here
+
+%\setlength\titlebox{5cm}
+% You can expand the titlebox if you need extra space
+% to show all the authors. Please do not make the titlebox
+% smaller than 5cm (the original size); we will check this
+% in the camera-ready version and ask you to change it back.
+
+\newcommand\BibTeX{B\textsc{ib}\TeX}
+
+\title{A Collaborative-Transformer for Joint Spoken Language Understanding}
+
+\author{First Author \\
+  Tailu Liu / No. 8, Huitong Times Square, No. 1 South Yaojiayuan Road, Chaoyang District, Beijing\\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{478421198@qq.com} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A spoken language understanding (SLU) system mainly includes two tasks: slot filling task and intent detection task. These two tasks are closely related and highly dependent on each other. In this paper, we propose a collaborative-transformer for joint SLU to explicitly model the information interaction between intent and slot, which can mutually promote the performance of two tasks, thus establishing the correlation between intent and slot deeply. In addition, our model can also obtain the explicit representation of intent and slot, which is the basis of explicit interaction between intent and slot. The experimental results on the two data sets are explicit, and our model performs better than other models, achieving the state of the art. The experimental results on the two data sets show that our model performs better than other models, and achieves the state-of-the-art.
+\end{abstract}
+
+
+
+\section{Introduction}
+
+Spoken language understanding is an important part of the task-based dialogue system, which can identify the intent and extract the corresponding slots form user's utterances. Therefore, SLU consists of two subtasks: intent detection and slot filling \citep{1}. For example, as shown in Table \ref{table1}, the intent of the sentence ``from seattle to salt lake city'' is ``atis\_flight'', and each word corresponds to a slot label.
+
+\begin{table}[htb]
+\centering
+\tiny
+\renewcommand\tabcolsep{2.0pt}
+    \begin{tabular}{llllll}
+    \hline \textbf{from} & \textbf{seattle} & \textbf{to} & \textbf{salt}& \textbf{lake}& \textbf{city}\\ \hline
+    O  & B-fromloc.city\_name & O & B-toloc.city\_name & I-toloc.city\_name & I-toloc.city\_name \\
+    atis\_flight \\
+    \hline
+    \end{tabular}
+    \caption{\label{table1} An example with intent and slot annotation(BIO format). }
+\end{table}
+
+
+
+The traditional method uses pipeline to solve these two tasks. Specifically, intent detection is a separate classification task, and slot extraction is a separate sequence labeling task, but there is a strong correlation between these two tasks \citep{2}.
+
+For instance, the intent of the sentence ``from seattle to salt lake city'' is ``flight'', so the slot label of the word ``seattle'' is more inclined to ``fromloc.city\_name'' rather than ``city\_name''. Conversely, when the slot labels for the word ``seattle'' and the phrase ``salt lake city'' are ``fromloc.city\_name'' and ``toloc.city\_name'', the intent of the discourse is most likely ``flight''. Due to the correlation between these two tasks, some work uses joint model to explore the connection between them.\citep{zhang2016a,4,5}
+
+Benefiting from the advantages of parameter sharing brought by multi-task learning, these models are superior to the pipeline-based method. However, these works did not further explore the relationship between intent detection and slot filling. \citet{2} and \citet{6} use the gating mechanism to selectively add intent information to the slot filling task.
+
+\citet{7} proposed a joint model with Stack-Propagation for SLU tasks, which will identify the intent of each token and input the intent representation of each token into the slot filling task. If the intent of some tokens is predicted incorrectly, the intent of other tokens will also be useful for the slot filling of each token. \citet{8} established two task networks for the intent detection task and the slot filling task. The two task networks are iterative during the training process, and the prediction results of the other task will be used when training one task.
+
+ \citet{2}, \citet{6} and \citet{7} are only to explore how to better integrate the intent information into the slot filling task. Although \citet{8} considers inputting the results of slot filling into the intent detection task, iterative training cannot model the interaction directly between them. \citet{Kai2019Interactive} propose a hierarchical capsule neural network to model the the hierarchical relationship among word, slot, and intent in an utterance. \citet{haihong2019a} introduced an SF-ID network, which includes SF sub-network and ID sub-network. The two sub-networks iteratively achieve the flow of information between intent and slot. Although these works have achieved good results on SLU tasks, their models still suffer from two issues:
+
+ 1)in these models, information is only transferred in one direction at the same time, such as from intent to slot, and then from slot to intent. The information interaction between intent and slot is not completed at the same time, which limits their performance and make these networks unable to adequately model the complex interactive information between intent and slot.
+2)None of these models obtain an explicit representation of intent and slot, which is very important for the information interaction between intent and slot.
+
+In this paper,  we propose a collaborative-transformer to solve the above two challenges.
+
+\begin{itemize}
+\item First, inspired by the LAN \citep{cui2019hierarchically-refined}(Hierarchically-Refined Label Attention Network for Sequence Labeling) model, we introduced intent label embedding and slot label embedding and designed the intent label attention layer and slot label attention layer. In this way, we can explicitly get the intent representation and slot representation.
+\item Second, we designed collaborative interactive attention mechanism, which can complete the two-way information interaction between the intent and the slot inside the encoder. And the token level and semantic level association between these two task will also be captured.
+\item Finally, the stacking of multi-layer collaborative transformer blocks allows intent representation and slot representation to deeply integrate the information of each other to improve the performance of the two tasks.
+\end{itemize}
+
+We conduct experiments on two benchmark datasets of ATIS \citep{Coucke2018Snips}
+ and SNIPS \citep{2}, Experimental results show that the performance of our model exceeds the current state-of-the-art in multiple evaluation indicators.
+
+The contributions of Collaborative-Transformer Network are as follows:
+
+1)We propose an collaborative-interactive attention mechanism, which can not only use intent knowledge to improve the performance of slot filling tasks, but also use slot knowledge to guide the detection of intent, and the information interaction between intent and slot is explicit and simultaneous .
+2)We constructed intent label attention and slot label attention to explicitly obtain the representation of intent and slot, which established a foundation for the interaction of information between intent and slot.
+3)The experimental results on two public data sets show the superiority of our model in performance, and our model has achieved state-of-the-art on multiple indicators.
+
+
+\section{Proposed model }
+
+In this section, we will introduce each sub-network of the Collaborative-Transformer model in detail. First, we use BiLSTM as a shared encoder to obtain the context sequence information of the input sentence, which can capture the shared features between the intent detection task and the slot filling task. Next we designed stacked collaborative-transformer blocks to model the interaction between intent and slot. Finally, the intent representation and slot representation of the collaborative-transformer block output of the last layer are input to the softmax layer and the CRF layer respectively for intent detection and slot filling. We use joint learning to train the model in figure 1.
+
+\begin{figure*}
+
+\centering
+\includegraphics[scale=0.8]{figure1.jpg}
+\caption{Illustration Collaborative-Transformer for joint SLU. It contains a shared BiLSTM encoder and stacked Collaborative-Transformer Block.}
+\label{fig:label}
+\end{figure*}
+
+
+\subsection{Shared encoder}
+LSTM is widely used in classification tasks and sequence labeling tasks, and as a baseline model for these tasks. We choose BiLSTM as the shared encoder layer of our model. The output of each utterance word embedding layer is $E = (e_1, e_2, ..., e_t)$. After input to BiLSTM, we can get the hidden state of this utterance $H = (h_1, h_2, ..., h_t)$. As a shared representation of intent and slot, H can provide context information and time series information for collaborative-transformer block, which are useful for slot filling tasks.
+\subsection{Collaborative-Transformer block }
+Collaborative-transformer block is the main innovation of this paper. Each collaborative-transformer block includes three networks: intent and slot label attention layer; collaborative interactive attention layer for intent representation and slot representation, and a feed-forward network layer for information fusion.
+\subsection{Intent and slot label attention layer}
+
+In order to get the intent representation and slot representation explicitly, before collaborative interactive attention, we built the intent label attention layer and slot label attention layer. Specifically, we use the parameters of the Slot-FC layer and Intent-FC layer as slot embedding $S_{emb}$ and intent embedding $I_{emb}$ . The parameter matrix $W$ of the output layer can be regarded as the distribution of labels in a certain sense.
+
+For the intent filling task, we use the hidden state $H$ as the query, $S_{emb}$ as the key and value, and then obtain the intent representation through the intent label attention layer. The attention calculation process is as follows£º
+
+\begin{gather}
+	A=softmax(HS^T_{emb}) \\
+	H_I=H+AI^T_{emb}
+\end{gather}
+
+ There is no additional parameter in the calculation process. And the slot attention layer is the same as intent attention layer. A represents the attention matrix, which can also be regarded as a fuzzy classification result of intent in token level. Therefore, we can get the intent representation $H_I$ and the slot representation $H_S$. The role of the label attention layer in the first layer of collaborative transformer block is to explicitly obtain $H_I$ and $H_S$, and the label attention layer in the subsequent $N-1$ layer is mainly for the interaction between label and representation.
+
+\subsection{Collaborative interactive attention layer}
+
+In our collaborative-transformer block, the role of the collaborative interactive attention layer is information interaction between intent and slot. Intent knowledge and slot knowledge are integrated into intent representation and slot representation respectively, so we can get a slot-aware intent representation and a slot-aware intent representation. The input of the collaborative interactive attention layer is the intent representation $H_I=(h_1,h_2,..,h_I)$ and slot representation $H_S=(h_1, h_2,...h_S)$ generated by the label attention layer. If the head is set to 1, the calculation process of collaborative interactive attention is as follows:
+
+\begin{gather}
+	Q_I,K_I,V_I=H_{I}W^Q_I,H_{S}W^K_I,H_SW^V_I \\
+    Q_S,K_S,V_S=K_{I}^T,Q_I^T,H_S,W^V_S \\
+	A_I=softmax \frac{(Q_IK^T_I)}{\sqrt{d_k}}\\
+    A_S=softmax \frac{(Q_SK^T_S)}{\sqrt{d_k}}\\
+    A^T_I=softmax \frac{(Q_IK^T_I)^T}{\sqrt{d_k}}\\
+    H_I^{new}=H_I+A_IV_I\\
+    H_S^{new}=H_S+A_SV_S
+\end{gather}
+
+Where $Q_I, K_I, V_I$ are intent query, key and value, $Q_S, K_S, V_S$ represent query, key and value of slot, $W_I^Q$,$W_I^K, W_I^V, W_S^V$ are weight matrix corresponding to $Q_I, K_I, V_I, V_S$; $Q_I$ and$ K_I$ are the transpose of $K_S$ and $Q_S$, and $A_I$ is the transpose of $A_S$.
+
+In fact, the attention matrix $A_I$ is generated by the inner product of intent query $Q_I (K_S)$ and slot query $Q_S (K_S)$, and the collaborative attention is symmetrical about intent and slot. In this way, the intent detection task and the slot filling task complete the knowledge interaction and establish a token-level connection.
+
+\subsection{Feed-forward network layer for information fusion}
+
+In the previous section, we explicitly modeled the interaction between intent and slot through collaborative interactive attention, and got the new intent representation $H_I^{new}$ and slot representation $H_S^{new}$. In this section, we use feed-forward network layer to implicitly fuse intent knowledge and slot knowledge.
+
+First, we concatenate $H_I$ and $H_S$ as $r_{is}$, and then we concatenate each $r_{is}^t$ of $r_{is}$ with $r_{is}^{t-1}$ and $r_{is}^{t+1}$ as $r^t$ :
+
+\begin{gather}
+	r_{is}=H_I^{new} \oplus H_S^{new}\\
+    r^t=r_{is}^{t-1}\oplus r_{is}^{t} \oplus r_{is}^{t+1}
+\end{gather}
+
+where $\oplus$ is concatenation operation.
+
+Next, the FFN layer fuses the window features, intent features and slot features contained in $r$.
+
+\begin{gather}
+	FFN(r)=max(0,rW_1+b_1)W_2+b_2\\
+    O_I =H_I^{new}+FFN(r)\\
+    O_S =H_S^{new}+FFN(r)
+\end{gather}
+
+The fusion of intent and slot in the FFN layer is equivalent to the implicit interaction between intent and slot. FFN layer automatically integrates intent knowledge and slot knowledge, and window features are very useful for slot filling task \citep{zhang2016a}.
+
+\subsection{Joint Training}
+
+The output of the last layer of the collaborative transformer block, $O_I = (O_1, O_2, ..., O_t), O_S = (O_1, O_2, ..., O_t)$, serves as the final representation of intent and slot. For the intent detection task, $O_I$ is used for intent prediction after the output layer is mapped:
+
+\begin{gather}
+	v_I=maxpool(O_I^{final})\\
+    y_{I\_pred}=softmax(W_Iv_I+b_I)
+\end{gather}
+
+Where y is the predicted distribution of intent and the loss function is formulated as:
+
+\begin{gather}
+L_{inte}=\sum{y^i_{I\_label}\log(y^i_{I\_label})}
+\end{gather}
+
+For the slot filling task, to take advantage of the global dependencies between labels we use CRF to search for the global optimal prediction sequence. $O_S$ is first mapped to the label distribution $Y_S$ by the output layer:
+
+\begin{gather}
+Y_S=WO_S+b_S
+\end{gather}
+
+Then we input $Y_S$ into the CRF, and use the Viterbi algorithm to decode the prediction sequence $y_{I\_pred}$. Given a sequence $x = [x_1, x_2, ..., x_t ]$, the corresponding golden label sequence is $y = [y_1, y_2, ..., y_t ]$,  the loss function is formulated as:
+
+\begin{gather}
+L_{slot}=\log( p(y_{S\_label}\mid x))\\
+=-(s(x,y_{S\_label})-\log(\sum_{ \widetilde y\in Y_x}e^{s(x, \widetilde y)})
+\end{gather}
+
+Where $S(\cdot)$ represents the score of a path, $Y_x$ is all possible label sequences.
+
+We use joint training to optimize these two tasks simultaneously. Compared with the pipeline model, the joint training method can effectively reduce the error propagation \citep{zhang2016a}. The final joint objective is formulated as :
+\begin{gather}
+L= \lambda L_{intent} + (1-\lambda)L_{slot}
+\end{gather}
+
+Where $\lambda$ is the hyperparameter combining the two losses.
+
+\section{Experiments}
+\subsection{Experimental Settings}
+
+To fully evaluate our model, we conduct experiments on two public benchmark datasets, ATIS \citep{hemphill1990the} and Snips \citep{Coucke2018Snips}. In order to ensure the fairness of the comparative experiment, our data processing method is consistent with \citet{7}. The details of these two dataset are shown in the Table \ref{table2}. For both ATIS and Snips, $300d$ GloVe vector \citep{Pennington2014Glove}is used as word embedding. The BiLSTM and transformer-block hidden size are set as $128$. $L2$ regularization is used on our model is $1 \times 10^{-6}$ and dropout ratio is adopted is $0.1$ for reducing overfit. We use Radam \citep{liu2019on} to optimize the parameters in our model. The layer of collaborative-transformer block is set to $3$ as hyper-parameters of the model. The weight coefficient A of the loss function is set to $0.2$. For all the experiments, we select the model which works the best on the dev set, and then evaluate it on the test set.
+
+
+\begin{table}
+\centering
+\begin{tabular}{ccc}
+\hline & \textbf{ATIS} & \textbf{SNIPS} \\ \hline
+Num of slots label&120&72 \\
+Num of intents label&	21&	7 \\
+Vocabulary size&	722	&11241\\
+Traing set&	4478&	13084\\
+Dev set&	500&	700\\
+Test set&	893	&700\\
+Tagging scheme&	BIO&	BIO\\ \hline
+\end{tabular}
+\caption{\label{table2} Details of dataset and tagging scheme. }
+\end{table}
+
+
+
+\subsection{Baselines}
+
+We compare our model with the existing baselines including:
+\begin{itemize}
+\item Joint Seq. \citet{4} proposed a multi-task modeling approach for jointly modeling domain detection, intent detection, and slot filling in a single recurrent neural network (RNN) architecture.
+\item Attention BiRNN. \citet{5} leveraged the attention mechanism to allow the network to learn the relationship between slot and intent.
+\item Slot-Gated Atten. \citet{2} proposed the slot-gated joint model to explore the correlation of slot filling and intent detection better.
+\item Self-Attentive Model. \citet{6} proposed a novel self-attentive model with the intent augmented gate mechanism to utilize the semantic correlation between slot and intent.
+\item Bi-Model. \citet{8} proposed the Bi-model to consider the intent and slot filling cross-impact to each other.
+\item CAPSULE-NLU. \citet{Kai2019Interactive} proposed a capsule-based neural network model with a dynamic routing-by-agreement schema to accomplish slot filling and intent detection.
+\item SF-ID Network. \citet{haihong2019a} introduced an SF-ID network to establish direct connections for the slot filling and intent detection to help them promote each other mutually.
+\item Stack-Propagation. \citet{7} proposed a joint model with Stack-Propagation which can explicitly use the intent information as input for slot filling, thus to capture the intent semantic knowledge.
+\end{itemize}
+For all the models above, we adopt the reported results from \citet{7}.
+\subsection{Overall Results}
+Following \citet{7}, we treated slot filling and intent prediction as sequence labeling problem and classification problem respectively, thus evaluate the proposed model performance by F1 score and accuracy. The sentence-level semantic frame parsing using overall accuracy. Table \ref{table3} gives the experiment results of the proposed models on SNIPS and ATIS.
+
+As shown in Table \ref{table3}, our model significantly outperforms the baseline models on both datasets and achieves the state-of-the-art results. Compared with the model of \citet{7} on Snips, our model achieves intent classification accuracy of $98.9\%$ (from $98.0\%$), slot filling F1 of $96.0\%$ (from $94.2\%$), and sentence-level semantic frame accuracy of $90.3\%$ (from $86.9\%$). On ATIS, our model achieves intent classification accuracy of $95.95\%$ (from $95.9\%$), slot filling F1 of $97.5\%$ (from $96.9\%$), and sentence-level semantic frame accuracy of $87.4\%$ (from $86.5\%$).
+
+Compared to ATIS, Snips includes multiple domains and has a larger vocabulary, For the more complex Snips dataset, our model achieves a large gain in the sentence-level semantic frame accuracy. The reason is that our model explicitly models the interaction.
+
+Compared with the model that only passes the intent information to the slot filling task, our model has achieved the expected improvement in the intent detection task. The improvement of the intent detection task will also pass more accurate intent knowledge to the slot filling task to achieve the effect of mutual promotion.
+
+
+\begin{table*}
+\centering
+\small
+\begin{tabular}{c|ccc|ccc}	
+\Xhline{0.9pt}
+\multirow{2}{*}{Model}	& \multicolumn{3}{c|}{SNIPS} &\multicolumn{3}{c}{ATIS}\\ \cline{2-7}
+   &Slot(F1)&intent(Acc)&Overall(Acc)&Slot(F1)&Intent(Acc)&Overall(Acc)\\
+\hline
+Join Seq \citep{4}&87.3&	96.9&	73.2	&94.3&	92.6&	80.7\\
+
+Attention BiRNN \citep{5}&	87.8&	96.7&	74.1&	94.2&	91.1&	78.9\\
+Slot-Gated Full Atten \citep{2}&	88.8&	97&	75.5&	94.8&	93.6&	82.2\\
+Slot-Gated Intent Atten \citep{2}&	88.3&	96.8&	74.6&	95.2&	94.1&	82.6\\
+Self-Attentive Model \citep{6}&	90&	97.5&	81&	95.1&	96.8&	82.2\\
+Bi-Model \citep{8}&	93.5&	97.2&	83.8&	95.5&	96.4&	85.7\\
+CAPSULE-NLU \citep{Kai2019Interactive}&	91.8&	97.3&	80.9&	95.2&	95&	83.4\\
+SF-ID Network \citep{haihong2019a}	&90.5&	97&	78.4&	95.6&	96.6&	86\\
+Stack-Propagation\citep{7}&	94.2&	98.0&	86.9&	95.9&	96.9&	86.5\\\hline
+Our model	&\textbf{96.2}&\textbf{	99.0}&	\textbf{90.58}&	\textbf{95.95}&	\textbf{97.5}&	\textbf{87.4}\\
+
+\Xhline{0.9pt}
+\end{tabular}
+\caption{\label{table3} Details of dataset and tagging scheme. }
+\end{table*}
+
+\subsection{Ablation experiment}
+In Section 4.3, we describe the improvement of the model on two data sets. In this section, we will explore the reasons why our model works by ablation experiments. First, we explored the effect of the label attention layer on model performance. Next, we studied the role of collaborative interactive  attention in the co-transformer block. Finally, we studied the effect of the FNN layer on our model.
+
+\begin{table*}
+\centering
+\small
+\begin{tabular}{c|ccc|ccc}	
+\Xhline{0.9pt}
+\multirow{2}{*}{Model}	& \multicolumn{3}{c|}{SNIPS} &\multicolumn{3}{c}{ATIS}\\ \cline{2-7}
+   &Slot(F1)&intent(Acc)&Overall(Acc)&Slot(F1)&Intent(Acc)&Overall(Acc)\\
+\hline
+With out intent label attention	&95.8&	98.5&	89.7&	95.5&	97.3&	86.7\\
+With out slot label attention&	95.77	&98.7&	89.9&	95.3	&97.3&	86.2\\
+Self-interactive attention&	95.1&	98.0&	87.5	&95.6&	96.6	&86\\
+With out FFN layer	&95.7&	98.8&	90.2&	95.6&	96.6	&86\\\hline
+Our model	&\textbf{96.2}&\textbf{	99.0}&	\textbf{90.58}&	\textbf{95.95}&	\textbf{97.5}&	\textbf{87.4}\\
+
+\Xhline{0.9pt}
+\end{tabular}
+\caption{\label{table4} Ablation experiments on the Snips and ATIS datasets }
+\end{table*}
+
+\subsubsection{Effect of label attention layer}
+
+In this section, we set up the following ablation experiments to study the impact of the label attention layer.
+
+1)We remove the intent attention layer and replace Hi with Hidden State H of BiLSTM. This means that we only get the slot representation explicitly.
+
+2)We remove the slot attention layer and replace Hi with Hidden State H of BiLSTM. This means that we only get the intent representation explicitly.
+
+As shown in Table \ref{table4}, compared with the complete model, when we only use the explicit representation of the slot (with out intent label attention), the performance of the model is degraded on both tasks. And when we only use the explicit representation of intent (with out slot label attention), we also get a similar result. We believe that this is because only the explicit representation of the slot or only the explicit representation of the intent will affect the interaction of the collaborative interactive  attention model information, which makes the slot representation only interact with the shared representation. This also proves the importance of obtaining explicit representation of intent. The lack of explicit representation of intent or slot will make the transfer of knowledge between intent and slot incomplete.
+
+\subsubsection{Effect of collaborative interactive attention layer}
+
+In order to confirm the importance of our proposed collaborative interactive attention and verify the impact of collaborative interactive attention on model performance, we use self-attention instead of collaborative interactive attention in the ablation experiment, and the input is changed to the concatenation of intent representation and slot representation. This replacement means the interaction is adapted from explicit querying each other's information to implicit fusion. And we name it as self-interactive attention.
+
+As shown in Table \ref{table4}, after using self-attention instead of collaborative interactive attention, the performance of the model on the three indicators in the two data sets has a relatively large decrease. The experimental results show that compared to implicit interactions, using collaborative interactive attention to explicitly model the interaction between intent representation and slot representation can better capture the complex correlation of two tasks.
+
+\subsubsection{Effect of FFN layer }
+
+In order to explore the effect of the FFN layer on the final effect of the model, we also removed the FFN layer in the ablation experiment. The experimental results show that slot F1 has different degrees of decline on the two data sets, intent accuracy drops slightly. The reason is that the slot filling task is essentially a sequence labeling task, and the window information captured by the FFN layer is useful for the sequence labeling task. The sample implicit fusion of the intent representation and slot representation in FFN layer will further enhance the two representations, by the stacking of multiple layers of collaborative transformer blocks.
+
+\section{Related Work}
+The intent detection task is regarded as a sentence classification task. At present, many text classification methods are used to solve this task, such as support vector machine (SVM), recurrent neural network (RNN), convolutional neural network (CNN) \citep{9,Sarikaya2011Deep,hashemi2016query}. The slot filling task is solved as a sequence labeling task. Common methods are conditional random field (CRF), recurrent neural network (RNN), and LSTM-CRF \citep{huang2015bidirectional}. \citet{cui2019hierarchically-refined} Proposed LAN instead of CRF to capture the dependencies between labels.
+
+In recent years, some methods based on joint training have avoided the error propagation of the pipeline method. \citet{zhang2016a} first uses the GRU network for the slu task, and the intent detection and slot filling share the same GRU encoder. \citet{5} proposed an attention-based encoder-decoder joint model for the two task. Benefiting from parameter sharing and joint training between the two tasks, these models perform better than the pipeline model. However, these methods only rely on parameter sharing to establish the connection between the two tasks, and do not specifically model the representation of the slot or the representation of intent.
+
+Recently, some work has begun to explore the enhancement of slot filling tasks by intent information. \citet{2} designed slot-gate to control the flow of information between intent filling and slot filling tasks. \citet{6} proposed an intention enhancement gate mechanism to capture the dependency between intent and slot. \citet{7} proposed the Stack-Propagation framework to predict the intent of each token and pass it to the slot decoder, and in this way, the model can avoid slot filling errors caused by incorrect prediction of the overall intent of utterance. These models only model the flow of intent information to slot filling tasks, and do not pay attention to the impact of slot information on intent detection. \citet{8} proposed Bi-model to iteratively enhance the other task with the result of one task during the training process. \citet{Kai2019Interactive} propose a hierarchical capsule neural network to model the the hierarchical relationship among word, slot, and intent in an utterance. \citet{haihong2019a} introduced an SF-ID network, which includes SF sub-network and ID sub-network. The two sub-networks iteratively achieve the flow of information between intent and slot. This limits their performance and makes these networks unable to adequately model the complex interactive information between intents and slots. However, in these networks, information is only transferred from intent to slot, and then from slot to intent. The information interaction between intent and slot is not completed at the same time, which limits their performance and make these networks unable to adequately model the complex interactive information between intent and slot. Compared with these models, in our proposed collaborative transformer network, intent representation and slot representation can be obtained explicitly and interact at the same time. In this way, our model can better establish the correlation between intent and slot at the word level and semantic level.
+
+\section*{Acknowledgments}
+
+The acknowledgments should go immediately before the references. Do not number the acknowledgments section.
+Do not include this section when submitting your paper for review.
+
+\bibliographystyle{acl_natbib}
+\bibliography{anthology,emnlp2020}
+
+
+
+\end{document}

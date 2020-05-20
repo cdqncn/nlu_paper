@@ -1,0 +1,118 @@
+\begin{thebibliography}{19}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{Coucke et~al.(2018)Coucke, Saade, Ball, Bluche, Caulier, Leroy,
+  Doumouro, Gisselbrecht, Caltagirone, and Lavril}]{Coucke2018Snips}
+Alice Coucke, Alaa Saade, Adrien Ball, Th¨¦odore Bluche, Alexandre Caulier,
+  David Leroy, Cl¨¦ment Doumouro, Thibault Gisselbrecht, Francesco Caltagirone,
+  and Thibaut Lavril. 2018.
+\newblock Snips voice platform: an embedded spoken language understanding
+  system for private-by-design voice interfaces.
+
+\bibitem[{Cui and Zhang(2019)}]{cui2019hierarchically-refined}
+Leyang Cui and Yue Zhang. 2019.
+\newblock Hierarchically-refined label attention network for sequence labeling.
+\newblock pages 4113--4126.
+
+\bibitem[{E et~al.(2019)E, Peiqing, Zhongfu, and Meina}]{haihong2019a}
+Haihong E, Niu Peiqing, Chen Zhongfu, and Song Meina. 2019.
+\newblock A novel bi-directional interrelated model for joint intent detection
+  and slot filling.
+\newblock pages 5467--5471.
+
+\bibitem[{Goo et~al.(2018)Goo, Gao, Hsu, Huo, Chen, Hsu, and Chen}]{2}
+Chihwen Goo, Guang Gao, Yunkai Hsu, Chihli Huo, Tsungchieh Chen, Kengwei Hsu,
+  and Yunnung Chen. 2018.
+\newblock Slot-gated modeling for joint slot filling and intent prediction.
+\newblock 2:753--757.
+
+\bibitem[{Haffner et~al.(2003)Haffner, Tur, and Wright}]{9}
+Patrick Haffner, Gokhan Tur, and J~H Wright. 2003.
+\newblock Optimizing svms for complex call classification.
+\newblock 1:632--635.
+
+\bibitem[{Hakkanitur et~al.(2016)Hakkanitur, Tur, Celikyilmaz, Chen, Gao, Deng,
+  and Wang}]{4}
+Dilek Hakkanitur, Gokhan Tur, Asli Celikyilmaz, Yunnung Chen, Jianfeng Gao,
+  Li~Deng, and Yeyi Wang. 2016.
+\newblock Multi-domain joint semantic frame parsing using bi-directional
+  rnn-lstm.
+\newblock pages 715--719.
+
+\bibitem[{Hashemi et~al.(2016)Hashemi, Asiaee, and Kraft}]{hashemi2016query}
+Homa~B Hashemi, Amir Asiaee, and Reiner Kraft. 2016.
+\newblock Query intent detection using convolutional neural networks.
+
+\bibitem[{Hemphill et~al.(1990)Hemphill, Godfrey, and
+  Doddington}]{hemphill1990the}
+Charles~T Hemphill, John~J Godfrey, and George~R Doddington. 1990.
+\newblock The atis spoken language systems pilot corpus.
+\newblock pages 96--101.
+
+\bibitem[{Huang et~al.(2015)Huang, Xu, and Yu}]{huang2015bidirectional}
+Zhiheng Huang, Wei Xu, and Kai Yu. 2015.
+\newblock Bidirectional lstm-crf models for sequence tagging.
+\newblock \emph{arXiv: Computation and Language}.
+
+\bibitem[{Li and Li(2018)}]{6}
+Changliang Li and Liang Li. 2018.
+\newblock A self-attentive model with gate mechanism for spoken language
+  understanding.
+\newblock pages 3824--3833.
+
+\bibitem[{Liu and Lane(2016)}]{5}
+Bing Liu and Ian Lane. 2016.
+\newblock Attention-based recurrent neural network models for joint intent
+  detection and slot filling.
+\newblock pages 685--689.
+
+\bibitem[{Liu et~al.(2019)Liu, Jiang, He, Chen, Liu, Gao, and Han}]{liu2019on}
+Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng
+  Gao, and Jiawei Han. 2019.
+\newblock On the variance of the adaptive learning rate and beyond.
+\newblock \emph{arXiv: Learning}.
+
+\bibitem[{Pennington et~al.(2014)Pennington, Socher, and
+  Manning}]{Pennington2014Glove}
+Jeffrey Pennington, Richard Socher, and Christopher Manning. 2014.
+\newblock Glove: Global vectors for word representation.
+\newblock In \emph{Proceedings of the 2014 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}.
+
+\bibitem[{Qin et~al.(2019)Qin, Che, Li, Wen, and Liu}]{7}
+Libo Qin, Wanxiang Che, Yangming Li, Haoyang Wen, and Ting Liu. 2019.
+\newblock A stack-propagation framework with token-level intent detection for
+  spoken language understanding.
+\newblock \emph{arXiv: Computation and Language}.
+
+\bibitem[{Sarikaya et~al.(2011)Sarikaya, Hinton, and
+  Ramabhadran}]{Sarikaya2011Deep}
+Ruhi Sarikaya, Geoffrey~E. Hinton, and Bhuvana Ramabhadran. 2011.
+\newblock Deep belief nets for natural language call-routing.
+\newblock In \emph{IEEE International Conference on Acoustics}.
+
+\bibitem[{Tur and De~Mori(2011)}]{1}
+Gokhan Tur and Renato De~Mori. 2011.
+\newblock \emph{Spoken Language Understanding: Systems for Extracting Semantic
+  Information from Speech}.
+\newblock Ph.D. thesis.
+
+\bibitem[{Wang et~al.(2018)Wang, Shen, and Jin}]{8}
+Yu~Wang, Yilin Shen, and Hongxia Jin. 2018.
+\newblock A bi-model based rnn semantic frame parsing model for intent
+  detection and slot filling.
+\newblock 2:309--314.
+
+\bibitem[{Zhang et~al.(2019)Zhang, Zhang, Liu, Zhao, and
+  Chen}]{Kai2019Interactive}
+Kai Zhang, Hefu Zhang, Qi~Liu, Hongke Zhao, and Enhong Chen. 2019.
+\newblock Interactive attention transfer network for cross-domain sentiment
+  classification.
+
+\bibitem[{Zhang and Wang(2016)}]{zhang2016a}
+Xiaodong Zhang and Houfeng Wang. 2016.
+\newblock A joint model of intent determination and slot filling for spoken
+  language understanding.
+\newblock pages 2993--2999.
+
+\end{thebibliography}
